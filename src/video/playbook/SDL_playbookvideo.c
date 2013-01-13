@@ -48,6 +48,7 @@
 #include <bps/event.h>
 #include <bps/orientation.h>
 #include <bps/navigator.h>
+#include <bps/virtualkeyboard.h>
 
 #include <EGL/egl.h>
 
@@ -212,6 +213,14 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 
 	if (BPS_SUCCESS != navigator_request_events(0)) {
 		SDL_SetError("Cannot get navigator events: %s", strerror(errno));
+		bps_shutdown();
+		screen_destroy_event(_priv->screenEvent);
+		screen_destroy_context(_priv->screenContext);
+		return -1;
+	}
+
+	if (BPS_SUCCESS != virtualkeyboard_request_events(0)) {
+		SDL_SetError("Cannot get virtualkeyboard events: %s", strerror(errno));
 		bps_shutdown();
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
