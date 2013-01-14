@@ -542,6 +542,10 @@ static int TranslateVKB(int sym, int mods, int flags, int scan, int cap, SDL_key
 	return shifted;
 }
 
+#ifdef RAW_KEYBOARD_EVENTS
+extern void handleKeyboardEvent(screen_event_t event);
+#else
+
 static void handleKeyboardEvent(screen_event_t event)
 {
 	static const int KEYBOARD_TYPE_MASK = 0x20;
@@ -583,6 +587,7 @@ static void handleKeyboardEvent(screen_event_t event)
 		SDL_PrivateKeyboard(SDL_RELEASED, &temp);
     }
 }
+#endif
 
 static void handleMtouchEvent(screen_event_t event, screen_window_t window, int type)
 {
