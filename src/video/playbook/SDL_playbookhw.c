@@ -114,7 +114,7 @@ int PLAYBOOK_FlipHWSurface(_THIS, SDL_Surface *surface)
 
 int PLAYBOOK_FillHWRect(_THIS, SDL_Surface *dst, SDL_Rect *rect, Uint32 color)
 {
-	fprintf(stderr, "Fill HW rect\n");
+	//fprintf(stderr, "Fill HW rect\n");
 	if (dst->flags & SDL_HWSURFACE) {
 		int attribs[] = {SCREEN_BLIT_DESTINATION_X, rect->x,
 						SCREEN_BLIT_DESTINATION_Y, rect->y,
