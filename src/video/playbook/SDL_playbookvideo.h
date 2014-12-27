@@ -45,6 +45,7 @@ struct SDL_PrivateVideoData {
     screen_window_t screenWindow;
     screen_window_t mainWindow;
     screen_buffer_t frontBuffer;
+    screen_display_t *displays;
     SDL_Surface *surface;
     void* pixels;
     int pitch;

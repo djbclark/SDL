@@ -34,6 +34,7 @@
 #include <bps/event.h>
 #include <bps/orientation.h>
 #include <bps/navigator.h>
+#include <bps/virtualkeyboard.h>
 #include "touchcontroloverlay.h"
 
 #include <errno.h>
@@ -864,6 +865,11 @@ void handleScreenEvent(_THIS, bps_event_t *event)
 			break;
 	}
 }
+extern void handle_virtualkeyboard_event(bps_event_t *event);
+void handleVirtualKeyboardEvent(_THIS, bps_event_t *event)
+{
+	handle_virtualkeyboard_event(event);
+}
 
 void
 PLAYBOOK_PumpEvents(_THIS)
@@ -876,13 +882,14 @@ PLAYBOOK_PumpEvents(_THIS)
 		int domain = bps_event_get_domain(event);
 		if (domain == navigator_get_domain()) {
 			handleNavigatorEvent(this, event);
-		}
-		else if (domain == screen_get_domain()) {
+		} else if (domain == screen_get_domain()) {
 			handleScreenEvent(this, event);
+		} else if (domain == virtualkeyboard_get_domain()){
+			handleVirtualKeyboardEvent(this, event);
 		}
-
 		// post SDL_SYSWMEVENT event containing the bps event pointer
-		handleCustomEvent(this, event);
+		// This event will be invalid by the time the SDL loop sends it to us..
+		//handleCustomEvent(this, event);
 
 		bps_get_event(&event, 0);
 	}

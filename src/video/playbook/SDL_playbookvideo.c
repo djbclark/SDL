@@ -161,6 +161,24 @@ int PLAYBOOK_8Bit_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	}
 	return 0;
 }
+void getWindowPropertyScreenSize(screen_window_t window){
+	int wm_size[2];
+	int rc = screen_get_window_property_iv(window, SCREEN_PROPERTY_SIZE, wm_size);
+	if(rc == 0){
+		fprintf(stderr, "Got resolution: w:%d, h:%d\n", wm_size[0], wm_size[1]);
+	}
+}
+
+void busyWaitForScreenRes(screen_window_t window, int width, int height){
+	int wm_size[2];
+	do {
+		usleep(50);
+		int rc = screen_get_window_property_iv(window, SCREEN_PROPERTY_SIZE, wm_size);
+		if(rc == 0){
+			fprintf(stderr, "Busy wait for Res (%d x %d): w:%d, h:%d\n", width, height, wm_size[0], wm_size[1]);
+		}
+	} while(wm_size[0] != width || wm_size[1] != height);
+}
 
 int PLAYBOOK_GetWMInfo(_THIS, SDL_SysWMinfo *info)
 {
@@ -176,10 +194,11 @@ int PLAYBOOK_GetWMInfo(_THIS, SDL_SysWMinfo *info)
 	}
 }
 
+
+
 int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 {
 	int i;
-	screen_display_t *displays = 0;
 	int displayCount = 0;
 	int screenResolution[2];
 
@@ -245,8 +264,8 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		return -1;
 	}
 
-	displays = SDL_malloc(displayCount * sizeof(screen_display_t));
-	if (!displays) {
+	_priv->displays = SDL_malloc(displayCount * sizeof(screen_display_t));
+	if (!_priv->displays) {
 		SDL_SetError("Cannot get current display: %s", strerror(errno));
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
@@ -255,10 +274,10 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		return -1;
 	}
 
-	rc = screen_get_context_property_pv(_priv->screenContext, SCREEN_PROPERTY_DISPLAYS, (void**)displays);
+	rc = screen_get_context_property_pv(_priv->screenContext, SCREEN_PROPERTY_DISPLAYS, (void**)_priv->displays);
 	if (rc) {
 		SDL_SetError("Cannot get current display: %s", strerror(errno));
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -270,10 +289,10 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		screenResolution[0] = atoi(getenv("WIDTH"));
 		screenResolution[1] = atoi(getenv("HEIGHT"));
 	} else {
-		rc = screen_get_display_property_iv(displays[0], SCREEN_PROPERTY_SIZE, screenResolution);
+		rc = screen_get_display_property_iv(_priv->displays[0], SCREEN_PROPERTY_SIZE, screenResolution);
 		if (rc) {
 			SDL_SetError("Cannot get native resolution: %s", strerror(errno));
-			SDL_free(displays);
+			SDL_free(_priv->displays);
 			screen_stop_events(_priv->screenContext);
 			screen_destroy_event(_priv->screenEvent);
 			screen_destroy_context(_priv->screenContext);
@@ -299,7 +318,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	rc = screen_create_window(&_priv->mainWindow, _priv->screenContext);
 	if (rc) {
 		SDL_SetError("Cannot create main application window: %s", strerror(errno));
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -313,7 +332,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	if (rc) {
 		SDL_SetError("Cannot create main window group: %s", strerror(errno));
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -325,7 +344,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	if (rc) {
 		SDL_SetError("Cannot set application window size: %s", strerror(errno));
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -337,7 +356,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	if (rc) {
 		SDL_SetError("Cannot set application window buffer size: %s", strerror(errno));
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -350,7 +369,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	if (rc) {
 		SDL_SetError("Cannot set application window format: %s", strerror(errno));
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -366,7 +385,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	if (rc) {
 		SDL_SetError("Cannot set application window usage: %s", strerror(errno));
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -379,7 +398,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	if (rc) {
 		SDL_SetError("Cannot set application window touch sensitivity: %s", strerror(errno));
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -396,7 +415,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	if (rc) {
 		SDL_SetError("Cannot set application window rotation: %s", strerror(errno));
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -408,7 +427,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 	if (rc) {
 		SDL_SetError("Cannot create application window buffer: %s", strerror(errno));
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -423,7 +442,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		SDL_SetError("Cannot retrieve application window buffer: %s", strerror(errno));
 		screen_destroy_window_buffers(_priv->mainWindow);
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -442,7 +461,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		SDL_SetError("Cannot fill application window: %s", strerror(errno));
 		screen_destroy_window_buffers(_priv->mainWindow);
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -456,7 +475,7 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		SDL_SetError("Cannot retrieve application window buffer: %s", strerror(errno));
 		screen_destroy_window_buffers(_priv->mainWindow);
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
@@ -470,15 +489,21 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 		SDL_SetError("Cannot post application window: %s", strerror(errno));
 		screen_destroy_window_buffers(_priv->mainWindow);
 		screen_destroy_window(_priv->mainWindow);
-		SDL_free(displays);
+		SDL_free(_priv->displays);
 		screen_stop_events(_priv->screenContext);
 		screen_destroy_event(_priv->screenEvent);
 		screen_destroy_context(_priv->screenContext);
 		bps_shutdown();
 		return -1;
 	}
+	/* Busy wait for the resolution to come back.
+	 * Why do I have to wait for the resolution to return to what
+	 * it was before screen_post_window()? Why does the resolution
+	 * change at all when we post?
+	 */
+	busyWaitForScreenRes(_priv->mainWindow, screenResolution[0], screenResolution[1]);
 
-	SDL_free(displays);
+	//SDL_free(displays);
 
 	_priv->screenWindow = 0;
 	_priv->surface = 0;
@@ -827,6 +852,7 @@ void PLAYBOOK_VideoQuit(_THIS)
 	screen_stop_events(_priv->screenContext);
 	screen_destroy_event(_priv->screenEvent);
 	screen_destroy_context(_priv->screenContext);
+	SDL_free(_priv->displays);
 	bps_shutdown();
 	if (_priv->tcoControlsDir) {
 		tco_shutdown(_priv->emu_context);
