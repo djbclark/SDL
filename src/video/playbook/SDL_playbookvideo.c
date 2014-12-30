@@ -175,7 +175,7 @@ void busyWaitForScreenRes(screen_window_t window, int width, int height){
 		usleep(50);
 		int rc = screen_get_window_property_iv(window, SCREEN_PROPERTY_SIZE, wm_size);
 		if(rc == 0){
-			fprintf(stderr, "Busy wait for Res (%d x %d): w:%d, h:%d\n", width, height, wm_size[0], wm_size[1]);
+			//fprintf(stderr, "Busy wait for Res (%d x %d): w:%d, h:%d\n", width, height, wm_size[0], wm_size[1]);
 		}
 	} while(wm_size[0] != width || wm_size[1] != height);
 }
