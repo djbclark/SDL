@@ -70,4 +70,7 @@ struct SDL_PrivateVideoData {
     } glInfo;
 };
 
+void setEnvForResolution(int width, int height);
+
+
 #endif /* _SDL_playbookvideo_h */

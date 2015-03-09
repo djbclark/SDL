@@ -180,6 +180,14 @@ void busyWaitForScreenRes(screen_window_t window, int width, int height){
 	} while(wm_size[0] != width || wm_size[1] != height);
 }
 
+void setEnvForResolution(int width, int height){
+	char val[16];
+	snprintf(val, 16, "%d", width);
+	setenv("WIDTH", val, 1);
+	snprintf(val, 16, "%d", height);
+	setenv("HEIGHT", val, 1);
+}
+
 int PLAYBOOK_GetWMInfo(_THIS, SDL_SysWMinfo *info)
 {
 	if ( info->version.major <= SDL_MAJOR_VERSION ) {
@@ -299,6 +307,8 @@ int PLAYBOOK_VideoInit(_THIS, SDL_PixelFormat *vformat)
 			bps_shutdown();
 			return -1;
 		}
+		// And set the env appropriately if not set
+		setEnvForResolution(screenResolution[0], screenResolution[1]);
 	}
 
 	// FIXME: Bad hack for PlayBook to avoid rotation issues.

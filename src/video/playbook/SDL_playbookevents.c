@@ -803,7 +803,8 @@ void handleNavigatorEvent(_THIS, bps_event_t *event)
 		if(rc){
 			SDL_SetError("Could not set mainWindow size or rotation: %s\n", strerror(errno));
 		}
-
+		// Set the ENV variables correctly for new res
+		setEnvForResolution(newsize[0], newsize[1]);
 		SDL_PrivateResize(newsize[0], newsize[1]);
 		navigator_done_orientation(event);
 		break;
