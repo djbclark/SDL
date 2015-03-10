@@ -16,6 +16,8 @@
 #include "touchcontroloverlay.h"
 #include "SDL_playbookvideo.h"
 
+#include <unistd.h>
+
 int handleKey(int sym, int mod, int scancode, uint16_t unicode, int event)
 {
 	int sdlEvent;
@@ -216,20 +218,20 @@ void locateTCOControlFile(_THIS)
     char *homeDir = SDL_getenv("HOME");
     char fullPath[512];
     sprintf(fullPath, "%s/../%s", homeDir, filename);
-    int fd = fopen(fullPath, "r");
+    int fd = (int)fopen(fullPath, "r");
     if (fd) {
         _priv->tcoControlsDir = SDL_malloc(strlen(fullPath) - strlen(filename) + 1);
         strncpy(_priv->tcoControlsDir, fullPath, strlen(fullPath) - strlen(filename));
         _priv->tcoControlsDir[strlen(fullPath)-strlen(filename)] = '\0';
-        fclose(fd);
+        fclose((FILE*)fd);
     } else {
         sprintf(fullPath, "%s/../app/native/%s", homeDir, filename);
-        fd = fopen(fullPath, "r");
+        fd = (int)fopen(fullPath, "r");
         if (fd) {
             _priv->tcoControlsDir = SDL_malloc(strlen(fullPath) - strlen(filename) + 1);
             strncpy(_priv->tcoControlsDir, fullPath, strlen(fullPath) - strlen(filename));
             _priv->tcoControlsDir[strlen(fullPath)-strlen(filename)] = '\0';
-            fclose(fd);
+            fclose((FILE*)fd);
         } else {
             _priv->tcoControlsDir = 0; // Use SDL multi-mouse controls.
         }
@@ -264,7 +266,7 @@ void initializeOverlay(_THIS, screen_window_t screenWindow)
 	// Clean up and set flags
 	SDL_free(_priv->tcoControlsDir);
 	if (loaded) {
-		_priv->tcoControlsDir = 1;
+		_priv->tcoControlsDir = "1";
 		tco_showlabels(_priv->emu_context, screenWindow);
 	} else {
 		tco_shutdown(&_priv->emu_context);
