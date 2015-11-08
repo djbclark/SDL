@@ -872,6 +872,9 @@ void handleVirtualKeyboardEvent(_THIS, bps_event_t *event)
 	handle_virtualkeyboard_event(event);
 }
 
+extern void lock_input();
+extern void unlock_input();
+extern void indicate_event_input();
 void
 PLAYBOOK_PumpEvents(_THIS)
 {
@@ -880,6 +883,7 @@ PLAYBOOK_PumpEvents(_THIS)
 	bps_get_event(&event, 0);
 	while (event)
 	{
+	  lock_input();
 		int domain = bps_event_get_domain(event);
 		if (domain == navigator_get_domain()) {
 			handleNavigatorEvent(this, event);
@@ -888,6 +892,8 @@ PLAYBOOK_PumpEvents(_THIS)
 		} else if (domain == virtualkeyboard_get_domain()){
 			handleVirtualKeyboardEvent(this, event);
 		}
+		indicate_event_input();
+		unlock_input();
 		// post SDL_SYSWMEVENT event containing the bps event pointer
 		// This event will be invalid by the time the SDL loop sends it to us..
 		//handleCustomEvent(this, event);
